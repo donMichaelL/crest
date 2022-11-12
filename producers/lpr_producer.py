@@ -22,7 +22,7 @@ msg = {
         "caseId": "6368e4cf9a91bd00019e7cf9",
     },
     "body": {
-        "deviceId": "cam-15",
+        "deviceId": "cam-1",
         "platesDetected": {
             "text": [
                 "JSC2936",

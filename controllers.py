@@ -47,13 +47,17 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
         for plate in plates:
             area = [area for area in areas if area.name == plate.area][0]
             if camera := get_data_from_redis(plate.detection.deviceID):
+                licence_plate = plate.detection.platesDetected.text
                 if CameraEntity.from_json(camera).is_cameraIn():
-                    area.add_vehicle(plate.detection.platesDetected.text)
+                    if licence_plate not in area.licensePlates:
+                        area.add_vehicle(licence_plate)
+                        area.add_circling_vehicle(licence_plate)
+                        area._check_vehicle_circling(licence_plate)
                 else:
-                    area.remove_vehicle(plate.detection.platesDetected.text)
+                    if licence_plate in area.licensePlates:
+                        area.remove_vehicle(licence_plate)
         write_data_to_redis("areas", AreaEntity.schema().dumps(areas, many=True))
         return areas
-
 
     def execute(self):
         super().execute()

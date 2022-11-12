@@ -33,6 +33,8 @@ NATIONAL_DB_URL = (
     + "/national-suspects-information/api/mock/get-suspect-by-license-plate/"
 )
 
+CIRCLING_THRESHOLD = 60
+
 SUSPECT_ATTRS_SET = {
     "id",
     "firstName",
