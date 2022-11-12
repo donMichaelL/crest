@@ -1,0 +1,31 @@
+version: "3.3"
+
+services:
+  adapter:
+    build: .
+    # image: donmichael/crest-fusion
+    environment:
+      - BOOTSTRAP_SERVER=10.129.150.90:9092
+      - NATIONAL_DB_BASE_URL=10.129.150.90:8282
+      - CIRAM_URL=http://ciram-api:5050/getDetections
+      - FUSION_GEO=http://geo:8000/
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: >
+      sh -c "python consumer.py"
+    depends_on:
+      - redis
+      - geo
+    restart: always
+  geo:
+    image: donmichael/fusion_geo
+    command: >
+      sh -c "python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+  redis:
+    image: redis:5
+  # ciram-api:
+  #   image: sofkost/crestthreat:latest
+  #   ports:
+  #     - "5050:5050"
