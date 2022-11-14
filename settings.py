@@ -35,6 +35,8 @@ NATIONAL_DB_URL = (
 
 CIRCLING_THRESHOLD = 60
 
+CONVOY_THRESHOLD = 1
+
 SUSPECT_ATTRS_SET = {
     "id",
     "firstName",

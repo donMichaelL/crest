@@ -1,12 +1,19 @@
+from pickle import FALSE
 import requests
 
 from settings import NATIONAL_DB_URL, SUSPECT_ATTRS_SET, VEHICLE_ATTRS_SET, CIRCLING_THRESHOLD
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, Undefined, config
-from typing import List, Optional
+from typing import List, Optional, Set
 from time import time
 
 from utils import check_server_for_restricted_area
+
+
+@dataclass
+class ConvoyItem:
+    license_plates: Optional[Set[str]] = field(default_factory=set)
+    timestamp_in_min: Optional[int] = 0
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
@@ -96,6 +103,7 @@ class LPR:
     severity: Optional[str] = None
     description: Optional[str] = None
     area: Optional[str] = field(default=None, metadata=config(exclude=lambda x:True))
+    convoy: Optional[bool] = False
 
     def get_info_from_db(self):
         text = self.detection.platesDetected.text

@@ -1,13 +1,18 @@
+from ast import If
 import requests
 import json
 from datetime import datetime
 from abc import ABC, abstractmethod
+from collections import defaultdict
+from time import time
 
-from models import ActivityRecoEntity, LPRMessageEntity, FaceDetectionEntity, ObjectDetectionEntity, CODDetectionEntity, AreaEntity, CameraEntity, LPR
+from models import ConvoyItem, ActivityRecoEntity, LPRMessageEntity, FaceDetectionEntity, ObjectDetectionEntity, CODDetectionEntity, AreaEntity, CameraEntity, LPR
 
-from settings import FUSION_GEO
+from settings import FUSION_GEO, CONVOY_THRESHOLD
 from utils import publish_to_kafka_person_lingering, publish_to_kafka_plates, post_ciram, write_data_to_redis, get_data_from_redis, publish_to_kafka_areas, check_server_for_restricted_area
 from typing import List
+
+Convoy_dict = defaultdict(ConvoyItem)
 
 
 class HandleKafkaTopic(ABC):
@@ -62,12 +67,32 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
     def execute(self):
         super().execute()
         lpr_msg = self.get_entities()
+
+        convoy = False
+        convoy_item = Convoy_dict[lpr_msg.body.deviceId]
+        current_timestamp = int(time()) // 60
+
+        if current_timestamp - convoy_item.timestamp_in_min > CONVOY_THRESHOLD:
+            convoy_item.timestamp_in_min = current_timestamp
+            convoy_item.license_plates.clear()
+
+        for plate in lpr_msg.plates_detected:
+            convoy_item.license_plates.add(plate.detection.platesDetected.text)
+        
+        if len(convoy_item.license_plates) > 3:
+            convoy = True
+
+        for plate in lpr_msg.plates_detected:
+            plate.convoy = convoy
+            
+
+
         if stored_area := get_data_from_redis('areas'):
             areas = self._update_areas_capacity(
                 AreaEntity.schema().loads(stored_area, many=True),
                 lpr_msg.plates_detected
             )
-            publish_to_kafka_areas(lpr_msg.header.caseId, AreaEntity.schema().dumps(areas, many=True))
+            publish_to_kafka_areas(lpr_msg.header.caseId, AreaEntity.schema().dumps(areas, many=True))  
         post_ciram(lpr_msg.custom_to_dict())
         publish_to_kafka_plates(lpr_msg)
 
@@ -133,5 +158,6 @@ class TOP12_05_VEHICLE_COUNT_EVENT(HandleKafkaTopic):
 class TOP12_04_LPR_ALERT(HandleKafkaTopic):
     def execute(self):
         super().execute()
-        print(f": Plate: {json.loads(self.msg)['body']['detection']['platesDetected']['text']} timestamp: {datetime.now()}")
+        print(f"Plate: {json.loads(self.msg)['body']['detection']['platesDetected']['text']} timestamp: {datetime.now()}")
+        print(self.msg)
 
