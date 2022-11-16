@@ -8,7 +8,7 @@ from time import time
 
 from models import ConvoyItem, ActivityRecoEntity, LPRMessageEntity, FaceDetectionEntity, ObjectDetectionEntity, CODDetectionEntity, AreaEntity, CameraEntity, LPR
 
-from settings import FUSION_GEO, CONVOY_THRESHOLD, FORBIDDEN_VEHICLE_CATEGORIES
+from settings import FUSION_GEO, CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER, FORBIDDEN_VEHICLE_CATEGORIES
 from utils import publish_to_kafka_forbidden_vehicle, publish_to_kafka_person_lingering, publish_to_kafka_plates, post_ciram, write_data_to_redis, get_data_from_redis, publish_to_kafka_areas, check_server_for_restricted_area
 from typing import List
 
@@ -69,7 +69,6 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
         super().execute()
         lpr_msg = self.get_entities()
 
-        convoy = False
         convoy_item = Convoy_dict[lpr_msg.body.deviceId]
         current_timestamp = int(time()) // 60
 
@@ -80,13 +79,9 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
         for plate in lpr_msg.plates_detected:
             convoy_item.license_plates.add(plate.detection.platesDetected.text)
         
-        if len(convoy_item.license_plates) > 3:
-            convoy = True
-
         for plate in lpr_msg.plates_detected:
-            plate.convoy = convoy
-            
-
+            if len(convoy_item.license_plates) > CONVOY_THRESHOLD_NUMBER:
+                plate.description = f"Alert: Convoy. " + plate.description
 
         if stored_area := get_data_from_redis('areas'):
             areas = self._update_areas_capacity(

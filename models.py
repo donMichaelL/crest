@@ -103,7 +103,6 @@ class LPR:
     severity: Optional[str] = None
     description: Optional[str] = None
     area: Optional[str] = field(default=None, metadata=config(exclude=lambda x:True))
-    convoy: Optional[bool] = False
 
     def get_info_from_db(self):
         text = self.detection.platesDetected.text
