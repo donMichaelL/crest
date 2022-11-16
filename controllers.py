@@ -33,6 +33,7 @@ class TOP22_08_ACTIVITY_RECO_DONE(HandleKafkaTopic):
     def execute(self):
         super().execute()
         activity = self.get_entities()
+        print(f"Description: {activity.body.activityDetected.activityDescription}")
         if activity.header.sender == "NKUA":
             return;
 
