@@ -8,8 +8,8 @@ from time import time
 
 from models import ConvoyItem, ActivityRecoEntity, LPRMessageEntity, FaceDetectionEntity, ObjectDetectionEntity, CODDetectionEntity, AreaEntity, CameraEntity, LPR
 
-from settings import FUSION_GEO, CONVOY_THRESHOLD
-from utils import publish_to_kafka_person_lingering, publish_to_kafka_plates, post_ciram, write_data_to_redis, get_data_from_redis, publish_to_kafka_areas, check_server_for_restricted_area
+from settings import FUSION_GEO, CONVOY_THRESHOLD, FORBIDDEN_VEHICLE_CATEGORIES
+from utils import publish_to_kafka_forbidden_vehicle, publish_to_kafka_person_lingering, publish_to_kafka_plates, post_ciram, write_data_to_redis, get_data_from_redis, publish_to_kafka_areas, check_server_for_restricted_area
 from typing import List
 
 Convoy_dict = defaultdict(ConvoyItem)
@@ -147,7 +147,20 @@ class TOP22_02_OBJECT_RECO_DONE(HandleKafkaTopic):
 
     def execute(self):
         super().execute()
-        post_ciram(self.get_entities().custom_to_dict())
+        objects_msg = self.get_entities()
+        object_descr = objects_msg.body.objectsDetected["description"]
+        print(object_descr)
+        if objects_msg.header.sender == "NKUA":
+            return;
+        
+        _, _, area = check_server_for_restricted_area(objects_msg.body.deviceId)
+        print(objects_msg.body.deviceId)
+        for vehicle in FORBIDDEN_VEHICLE_CATEGORIES:
+            if vehicle in object_descr:
+                new_descr = f"ALERT {vehicle} is forbidden in {area}: " + objects_msg.body.objectsDetected["description"]
+                objects_msg.body.objectsDetected["description"] = new_descr
+                publish_to_kafka_forbidden_vehicle(objects_msg.header.caseId, objects_msg.to_dict()["objectsDet"])
+        post_ciram(objects_msg.custom_to_dict())
 
 
 class TOP12_05_VEHICLE_COUNT_EVENT(HandleKafkaTopic):

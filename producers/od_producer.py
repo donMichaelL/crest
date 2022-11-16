@@ -8,34 +8,63 @@ producer = KafkaProducer(
 )
 
 msg = {
-    "header": {
-        "topicName": "TOP22_02_OBJECT_RECO_DONE",
-        "topicVer1": 1,
-        "topicVer2": 2,
-        "msgId": "Message Id",
-        "sender": "CERTH",
-        "sentUtc": "2021-04-26 13:06:49.874281",
-        "status": "System",
-        "msgType": "Data",
-        "source": "CERTH Object detection module",
-        "scope": "Private",
-        "caseId": "60867cbf857aba00016b01e9",
+  "header": {
+    "topicName": "TOP22_02_OBJECT_RECO_DONE",
+    "topicVer1": 1,
+    "topicVer2": 2,
+    "msgId": "Message Id",
+    "sender": "CERTH",
+    "sentUtc": "2022-05-19T13:12:47.343505Z",
+    "status": "System",
+    "msgType": "Data",
+    "source": "CERTH Object detection module",
+    "scope": "Private",
+    "caseId": "0"
+  },
+  "body": {
+    "deviceId": "cam-1",
+    "domainId": "visualAnalysis:objectDetection:dbe39fab-7159-4bc6-8e25-78cb20877a23",
+    "objectsDetected": {
+      "boxes": [
+        [
+          131,
+          155,
+          63,
+          28
+        ],
+        [
+          179,
+          113,
+          70,
+          158
+        ],
+        [
+          240,
+          95,
+          80,
+          173
+        ]
+      ],
+      "scores": [
+        0.967,
+        0.996,
+        0.965
+      ],
+      "classes": [
+        2,
+        0,
+        0
+      ],
+      "class_names": [
+        "car",
+        "person",
+        "person"
+      ],
+      "description": "truck 2 person(s),1 car(s) was/were detected. Vehicles type and color:car Gray"
     },
-    "body": {
-        "deviceId": "cam-11",
-        "domainId": "visualAnalysis:objectDetection:46f49f30-8fc8-4156-864d-d01b8771b2af",
-        "objectsDetected": {
-            "boxes": [[209, 442, 347, 653], [267, 331, 388, 516]],
-            "scores": [0.960647702217102, 0.5],
-            "classes": [1, 2],
-            "class_names": [
-                "handbag",
-            ],
-            "description": "2 object(s) was/were detected",
-        },
-        "timestampProcessing": "2021-04-26 13:06:49.874292",
-        "mediaRootId": "/projects/60867cbf857aba00016b01e9/artefacts/6086bae9171cd388734c7dcf/media",
-    },
+    "timestampProcessing": "2022-05-19T13:12:47.343533Z",
+    "mediaRootId": "/projects/6204e17818279f000142419d/artefacts/628642403e29b525a7ae0e32/media/114"
+  }
 }
 
 

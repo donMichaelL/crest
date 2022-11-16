@@ -37,6 +37,10 @@ CIRCLING_THRESHOLD = 60
 
 CONVOY_THRESHOLD = 1
 
+FORBIDDEN_VEHICLE_CATEGORIES = [
+    "truck"
+]
+
 SUSPECT_ATTRS_SET = {
     "id",
     "firstName",
