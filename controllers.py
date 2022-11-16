@@ -50,6 +50,7 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
     model = LPRMessageEntity
 
     def _update_areas_capacity(self, areas: List[AreaEntity], plates: List[LPR]):
+        self.circling_plates = []
         for plate in plates:
             area = [area for area in areas if area.name == plate.area][0]
             if camera := get_data_from_redis(plate.detection.deviceID):
@@ -58,7 +59,7 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
                     if licence_plate not in area.licensePlates:
                         area.add_vehicle(licence_plate)
                         area.add_circling_vehicle(licence_plate)
-                        area._check_vehicle_circling(licence_plate)
+                        self.circling_plates.extend(area._check_vehicle_circling(licence_plate))
                 else:
                     if licence_plate in area.licensePlates:
                         area.remove_vehicle(licence_plate)
@@ -68,6 +69,13 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
     def execute(self):
         super().execute()
         lpr_msg = self.get_entities()
+
+        if stored_area := get_data_from_redis('areas'):
+            areas = self._update_areas_capacity(
+                AreaEntity.schema().loads(stored_area, many=True),
+                lpr_msg.plates_detected
+            )
+            publish_to_kafka_areas(lpr_msg.header.caseId, AreaEntity.schema().dumps(areas, many=True))  
 
         convoy_item = Convoy_dict[lpr_msg.body.deviceId]
         current_timestamp = int(time()) // 60
@@ -82,13 +90,9 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
         for plate in lpr_msg.plates_detected:
             if len(convoy_item.license_plates) > CONVOY_THRESHOLD_NUMBER:
                 plate.description = f"Alert: Convoy. " + plate.description
+            if plate.detection.platesDetected.text in self.circling_plates:
+                plate.description = f"Alert: Returning vehicle. " + plate.description
 
-        if stored_area := get_data_from_redis('areas'):
-            areas = self._update_areas_capacity(
-                AreaEntity.schema().loads(stored_area, many=True),
-                lpr_msg.plates_detected
-            )
-            publish_to_kafka_areas(lpr_msg.header.caseId, AreaEntity.schema().dumps(areas, many=True))  
         post_ciram(lpr_msg.custom_to_dict())
         publish_to_kafka_plates(lpr_msg)
 

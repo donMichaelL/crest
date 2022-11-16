@@ -1,7 +1,7 @@
 from pickle import FALSE
 import requests
 
-from settings import NATIONAL_DB_URL, SUSPECT_ATTRS_SET, VEHICLE_ATTRS_SET, CIRCLING_THRESHOLD
+from settings import NATIONAL_DB_URL, SUSPECT_ATTRS_SET, VEHICLE_ATTRS_SET, CIRCLING_THRESHOLD, CIRCLING_THRESHOLD_NUMBER
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, Undefined, config
 from typing import List, Optional, Set
@@ -65,10 +65,11 @@ class AreaEntity:
                 for timestamp in circling_plate.timestamps_in_min[:]:
                     if current_timestamp_in_min - timestamp > CIRCLING_THRESHOLD:
                         circling_plate.timestamps_in_min.remove(timestamp)
-            if len(circling_plate.timestamps_in_min) > 2:
+            if len(circling_plate.timestamps_in_min) > CIRCLING_THRESHOLD_NUMBER:
                 self.circlingPlatesReport.append(licence_plate)
             elif licence_plate in self.circlingPlatesReport:
                 self.circlingPlatesReport.remove(licence_plate)
+            return self.circlingPlatesReport
 
     def remove_vehicle(self, plate):
         self.vehiclesOut +=1
