@@ -39,6 +39,17 @@ NATIONAL_DB_STOLEN = (
     + "/national-vehicles-information/api/mock/get-vehicle-by-license-plate/"
 )
 
+VEHICLE_COLOUR_LIST = {
+    "color:car Red", 
+    "color:car Blue", 
+    "color:car Green", 
+    "color:car White", 
+    "color:car Black", 
+    "color:car Yellow", 
+    "color:car Gray", 
+    "color:car Cyan"
+}
+
 CIRCLING_THRESHOLD = 60
 
 CIRCLING_THRESHOLD_NUMBER = 2

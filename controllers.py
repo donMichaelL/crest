@@ -7,11 +7,12 @@ from time import time
 
 from models import ConvoyItem, ActivityRecoEntity, LPRMessageEntity, FaceDetectionEntity, ObjectDetectionEntity, CODDetectionEntity, AreaEntity, CameraEntity, LPR
 
-from settings import FUSION_GEO, CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER, FORBIDDEN_VEHICLE_CATEGORIES, NATIONAL_DB_STOLEN
+from settings import FUSION_GEO, CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER, FORBIDDEN_VEHICLE_CATEGORIES, NATIONAL_DB_STOLEN, VEHICLE_COLOUR_LIST
 from utils import publish_to_kafka_forbidden_vehicle, publish_to_kafka_person_lingering, publish_to_kafka_plates, post_ciram, write_data_to_redis, get_data_from_redis, publish_to_kafka_areas, check_server_for_restricted_area
 from typing import List
 
 Convoy_dict = defaultdict(ConvoyItem)
+OD_CARS = []
 
 
 class HandleKafkaTopic(ABC):
@@ -47,6 +48,7 @@ class TOP22_08_ACTIVITY_RECO_DONE(HandleKafkaTopic):
 
 class TOP22_11_LPR_DONE(HandleKafkaTopic):
     model = LPRMessageEntity
+    LPR_COLOR = ""
 
     def _update_areas_capacity(self, areas: List[AreaEntity], plates: List[LPR]):
         self.circling_plates = []
@@ -69,6 +71,7 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
         response = requests.get(NATIONAL_DB_STOLEN + plate)
         try:
             msg = response.json()[0]
+            self.LPR_COLOR = msg["color"]
             if msg['stolen'] == 'true':
                 return True
             return False
@@ -103,6 +106,8 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
                 plate.description = f"Alert: Returning vehicle. " + plate.description
             if self._check_if_vehicle_stolen(plate.detection.platesDetected.text):
                 plate.description = f"Alert: Stolen vehicle. " + plate.description
+            if len(OD_CARS) > 0 and self.LPR_COLOR not in OD_CARS:
+                plate.description = f"Alert: Fake plate." + plate.description
 
         post_ciram(lpr_msg.custom_to_dict())
         publish_to_kafka_plates(lpr_msg)
@@ -162,9 +167,14 @@ class TOP22_02_OBJECT_RECO_DONE(HandleKafkaTopic):
         print(object_descr)
         if objects_msg.header.sender == "NKUA":
             return;
+
+        OD_CARS.clear()
+
+        for car_colour in VEHICLE_COLOUR_LIST:
+            if car_colour in objects_msg.body.objectsDetected["description"]:
+                OD_CARS.append(list(car_colour.split(" "))[1].lower())
         
         _, _, area = check_server_for_restricted_area(objects_msg.body.deviceId)
-        print(objects_msg.body.deviceId)
         for vehicle in FORBIDDEN_VEHICLE_CATEGORIES:
             if vehicle in object_descr:
                 new_descr = f"ALERT {vehicle} is forbidden in {area}: " + objects_msg.body.objectsDetected["description"]
