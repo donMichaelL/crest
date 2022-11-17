@@ -33,6 +33,12 @@ NATIONAL_DB_URL = (
     + "/national-suspects-information/api/mock/get-suspect-by-license-plate/"
 )
 
+NATIONAL_DB_STOLEN = (
+    "http://"
+    + "10.129.150.90:8283"
+    + "/national-vehicles-information/api/mock/get-vehicle-by-license-plate/"
+)
+
 CIRCLING_THRESHOLD = 60
 
 CIRCLING_THRESHOLD_NUMBER = 2

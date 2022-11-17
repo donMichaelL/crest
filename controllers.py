@@ -1,4 +1,3 @@
-from ast import If
 import requests
 import json
 from datetime import datetime
@@ -8,7 +7,7 @@ from time import time
 
 from models import ConvoyItem, ActivityRecoEntity, LPRMessageEntity, FaceDetectionEntity, ObjectDetectionEntity, CODDetectionEntity, AreaEntity, CameraEntity, LPR
 
-from settings import FUSION_GEO, CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER, FORBIDDEN_VEHICLE_CATEGORIES
+from settings import FUSION_GEO, CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER, FORBIDDEN_VEHICLE_CATEGORIES, NATIONAL_DB_STOLEN
 from utils import publish_to_kafka_forbidden_vehicle, publish_to_kafka_person_lingering, publish_to_kafka_plates, post_ciram, write_data_to_redis, get_data_from_redis, publish_to_kafka_areas, check_server_for_restricted_area
 from typing import List
 
@@ -65,6 +64,16 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
                         area.remove_vehicle(licence_plate)
         write_data_to_redis("areas", AreaEntity.schema().dumps(areas, many=True))
         return areas
+    
+    def _check_if_vehicle_stolen(self, plate) -> bool:
+        response = requests.get(NATIONAL_DB_STOLEN + plate)
+        try:
+            msg = response.json()[0]
+            if msg['stolen'] == 'true':
+                return True
+            return False
+        except Exception as err:
+            return False
 
     def execute(self):
         super().execute()
@@ -92,6 +101,8 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
                 plate.description = f"Alert: Convoy. " + plate.description
             if plate.detection.platesDetected.text in self.circling_plates:
                 plate.description = f"Alert: Returning vehicle. " + plate.description
+            if self._check_if_vehicle_stolen(plate.detection.platesDetected.text):
+                plate.description = f"Alert: Stolen vehicle. " + plate.description
 
         post_ciram(lpr_msg.custom_to_dict())
         publish_to_kafka_plates(lpr_msg)
