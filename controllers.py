@@ -109,8 +109,3 @@ class TOP22_02_OBJECT_RECO_DONE(HandleKafkaTopic):
         post_ciram(objects_msg.custom_to_dict())
 
 
-class TOP12_05_VEHICLE_COUNT_EVENT(HandleKafkaTopic):
-    def execute(self):
-        super().execute()
-        print(json.loads(self.msg))
-
