@@ -3,10 +3,10 @@ import json
 from collections import defaultdict
 from time import time
 
-from models import ConvoyItem, LPRMessageEntity, ObjectDetectionEntity, AreaEntity, CameraEntity, LPR
+from models import ConvoyItem, LPRMessageEntity, AreaEntity, CameraEntity, LPR
 
-from settings import CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER, FORBIDDEN_VEHICLE_CATEGORIES, NATIONAL_DB_STOLEN, VEHICLE_COLOUR_LIST
-from utils import publish_to_kafka_forbidden_vehicle, publish_to_kafka_plates, post_ciram, publish_to_kafka_areas, check_server_for_restricted_area
+from settings import CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER, NATIONAL_DB_STOLEN
+from utils import publish_to_kafka_plates, post_ciram, publish_to_kafka_areas
 from services.redis_services import write_data_to_redis, get_data_from_redis
 from services.models import HandleKafkaTopic
 
@@ -81,31 +81,5 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
 
         post_ciram(lpr_msg.custom_to_dict())
         publish_to_kafka_plates(lpr_msg)
-
-
-class TOP22_02_OBJECT_RECO_DONE(HandleKafkaTopic):
-    model = ObjectDetectionEntity
-
-    def execute(self):
-        super().execute()
-        objects_msg = self.get_entities()
-        object_descr = objects_msg.body.objectsDetected["description"]
-        print(object_descr)
-        if objects_msg.header.sender == "NKUA":
-            return;
-
-        OD_CARS.clear()
-
-        for car_colour in VEHICLE_COLOUR_LIST:
-            if car_colour in objects_msg.body.objectsDetected["description"]:
-                OD_CARS.append(list(car_colour.split(" "))[1].lower())
-        
-        _, _, area = check_server_for_restricted_area(objects_msg.body.deviceId)
-        for vehicle in FORBIDDEN_VEHICLE_CATEGORIES:
-            if vehicle in object_descr:
-                new_descr = f"ALERT {vehicle} is forbidden in {area}: " + objects_msg.body.objectsDetected["description"]
-                objects_msg.body.objectsDetected["description"] = new_descr
-                publish_to_kafka_forbidden_vehicle(objects_msg.header.caseId, objects_msg.to_dict()["objectsDet"])
-        post_ciram(objects_msg.custom_to_dict())
 
 

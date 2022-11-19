@@ -191,25 +191,5 @@ class LPRMessageEntity:
         result['LPR']['case_id'] = self.header.caseId
         result['LPR']['platesDetected'] = result.pop('plates_detected')
         return result
-        
 
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass
-class ObjectDetectionBodyEntity:
-    deviceId: str
-    mediaRootId: str
-    domainId: str
-    objectsDetected: dict
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass
-class ObjectDetectionEntity:
-    header: Header = field(metadata=config(exclude=lambda x:True))
-    body: ObjectDetectionBodyEntity = field(metadata=config(field_name="objectsDet"))
-
-    def custom_to_dict(self):
-        result = self.to_dict()
-        result['objectsDet']['caseID'] = self.header.caseId
-        return result
 
