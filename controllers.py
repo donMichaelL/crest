@@ -7,8 +7,10 @@ from time import time
 
 from models import ConvoyItem, LPRMessageEntity, ObjectDetectionEntity, AreaEntity, CameraEntity, LPR
 
-from settings import FUSION_GEO, CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER, FORBIDDEN_VEHICLE_CATEGORIES, NATIONAL_DB_STOLEN, VEHICLE_COLOUR_LIST
-from utils import publish_to_kafka_forbidden_vehicle, publish_to_kafka_plates, post_ciram, write_data_to_redis, get_data_from_redis, publish_to_kafka_areas, check_server_for_restricted_area
+from settings import CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER, FORBIDDEN_VEHICLE_CATEGORIES, NATIONAL_DB_STOLEN, VEHICLE_COLOUR_LIST
+from utils import publish_to_kafka_forbidden_vehicle, publish_to_kafka_plates, post_ciram, publish_to_kafka_areas, check_server_for_restricted_area
+from services.redis_services import write_data_to_redis, get_data_from_redis
+
 from typing import List
 
 Convoy_dict = defaultdict(ConvoyItem)
@@ -93,34 +95,6 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
         post_ciram(lpr_msg.custom_to_dict())
         publish_to_kafka_plates(lpr_msg)
 
-
-class TOP21_01_COMMAND_CENTER_MISSION(HandleKafkaTopic):
-    def _publish_to_geo_areas(self):
-        headers = {"Content-Type": "application/json"}
-        try:
-            _ = requests.post(FUSION_GEO + 'set-areas/' , data=self.msg, headers=headers)
-            print(f'Message was sent to geo with cameras and areas')
-        except requests.ConnectionError as err:
-            print(err)
-
-    def _store_areas(self, data_dict):
-        areas = AreaEntity.schema().load(data_dict["body"]["mission"]["areas"], many=True)
-        write_data_to_redis("areas", AreaEntity.schema().dumps(areas, many=True))
-    
-    def _store_cameras(self, data_dict):
-        cameras= CameraEntity.schema().load(
-                data_dict["body"]["mission"]["equipment"]["cameras"], many=True
-        )
-        [write_data_to_redis(camera.deviceId, camera.to_json()) 
-            for camera in cameras if camera.areaInOut]
-
-    def execute(self):
-        super().execute()
-        data_dict = json.loads(self.msg)
-        self._store_areas(data_dict)
-        self._store_cameras(data_dict)
-        self._publish_to_geo_areas()
-    
 
 class TOP22_02_OBJECT_RECO_DONE(HandleKafkaTopic):
     model = ObjectDetectionEntity

@@ -1,14 +1,10 @@
 import json
 import requests
-import redis
 
 from datetime import datetime
 from kafka import KafkaProducer
 
 from settings import BOOTSTRAP_SERVER, FUSION_GEO, CIRAM_URL
-
-from settings import REDIS_HOST, REDIS_PORT
-r = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
 
 def post_ciram(data: dict):
@@ -118,14 +114,3 @@ def check_server_for_restricted_area(camera_name: str):
             return ('Medium', 'Vehicle NOT in restricted area', None)
     except Exception as err:
         return ('Medium', 'Vehicle NOT in restricted area', None)
-
-
-def write_data_to_redis(key, value):
-    r.set(key, value)
-
-
-def get_data_from_redis(key):
-    try:
-        return r.get(key).decode()
-    except:
-        return None
