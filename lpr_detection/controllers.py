@@ -46,17 +46,20 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
             return False
         except Exception as err:
             return False
-
-    def execute(self):
-        super().execute()
-        lpr_msg = self.get_entities()
-
+    
+    def _create_vehicle_count_msg(self, lpr_msg):
         if stored_area := get_data_from_redis('areas'):
             areas = self._update_areas_capacity(
                 AreaEntity.schema().loads(stored_area, many=True),
                 lpr_msg.plates_detected
             )
             publish_to_kafka_areas(lpr_msg.header.caseId, AreaEntity.schema().dumps(areas, many=True))  
+
+    def execute(self):
+        super().execute()
+        lpr_msg = self.get_entities()
+
+        self._create_vehicle_count_msg(lpr_msg)
 
         convoy_item = self.convoy_dict[lpr_msg.body.deviceId]
         convoy_item.check_and_clear_licence_plates()

@@ -8,11 +8,11 @@ def check_server_for_restricted_area(camera_name: str):
         r = requests.get(FUSION_GEO + 'check-camera/' , params=payload)
         data = r.json()
         if data['found_areas'] == True:
-            return ('High', 'Vehicle in restricted area', data['area'])
+            return ('High', 'Vehicle in restricted area. The owner of the vehicle is not a suspect.', data['area'])
         else:
-            return ('Medium', 'Vehicle NOT in restricted area', None)
+            return ('Medium', 'Vehicle NOT in restricted area. The owner of the vehicle is not a suspect.', None)
     except Exception as err:
-        return ('Medium', 'Vehicle NOT in restricted area', None)
+        return ('Medium', 'Vehicle NOT in restricted area. The owner of the vehicle is not a suspect.', None)
 
 
 def publish_to_geo_areas(msg):

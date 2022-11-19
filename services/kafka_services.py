@@ -83,7 +83,4 @@ def publish_to_kafka_plates(lpr_message):
         "caseId": lpr_message.header.caseId,
     }
     for plate in lpr_message.plates_detected:
-        if hasattr(plate, "suspect"):
-            # print(plate.to_dict())
-            print(plate.to_dict())
-            publishKafka("TOP12_04_LPR_ALERT", header, plate.to_dict())
+        publishKafka("TOP12_04_LPR_ALERT", header, plate.to_dict())
