@@ -5,10 +5,10 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from time import time
 
-from models import ConvoyItem, ActivityRecoEntity, LPRMessageEntity, FaceDetectionEntity, ObjectDetectionEntity, CODDetectionEntity, AreaEntity, CameraEntity, LPR
+from models import ConvoyItem, LPRMessageEntity, FaceDetectionEntity, ObjectDetectionEntity, CODDetectionEntity, AreaEntity, CameraEntity, LPR
 
 from settings import FUSION_GEO, CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER, FORBIDDEN_VEHICLE_CATEGORIES, NATIONAL_DB_STOLEN, VEHICLE_COLOUR_LIST
-from utils import publish_to_kafka_forbidden_vehicle, publish_to_kafka_person_lingering, publish_to_kafka_plates, post_ciram, write_data_to_redis, get_data_from_redis, publish_to_kafka_areas, check_server_for_restricted_area
+from utils import publish_to_kafka_forbidden_vehicle, publish_to_kafka_plates, post_ciram, write_data_to_redis, get_data_from_redis, publish_to_kafka_areas, check_server_for_restricted_area
 from typing import List
 
 Convoy_dict = defaultdict(ConvoyItem)
@@ -25,25 +25,6 @@ class HandleKafkaTopic(ABC):
     @abstractmethod
     def execute(self):
         print(f"Message from {self.__class__.__name__} received.")
-
-
-class TOP22_08_ACTIVITY_RECO_DONE(HandleKafkaTopic):
-    model = ActivityRecoEntity
-
-    def execute(self):
-        super().execute()
-        activity = self.get_entities()
-        print(f"Description: {activity.body.activityDetected.activityDescription}")
-        if activity.header.sender == "NKUA":
-            return;
-
-        _, _, area = check_server_for_restricted_area(activity.body.deviceId)
-        description_lenght = len(activity.body.activityDetected.activityDescription)
-        for index, detection in enumerate(activity.body.activityDetected.activityDuration):
-            if detection > 2 and description_lenght > index:
-                new_descr = f"ALERT in {area}: " + activity.body.activityDetected.activityDescription[index]
-                activity.body.activityDetected.activityDescription[index] = new_descr
-        publish_to_kafka_person_lingering(activity.header.caseId, activity.to_dict()["body"])
 
 
 class TOP22_11_LPR_DONE(HandleKafkaTopic):
