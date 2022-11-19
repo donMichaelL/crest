@@ -1,7 +1,5 @@
 import requests
 import json
-from datetime import datetime
-from abc import ABC, abstractmethod
 from collections import defaultdict
 from time import time
 
@@ -10,23 +8,12 @@ from models import ConvoyItem, LPRMessageEntity, ObjectDetectionEntity, AreaEnti
 from settings import CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER, FORBIDDEN_VEHICLE_CATEGORIES, NATIONAL_DB_STOLEN, VEHICLE_COLOUR_LIST
 from utils import publish_to_kafka_forbidden_vehicle, publish_to_kafka_plates, post_ciram, publish_to_kafka_areas, check_server_for_restricted_area
 from services.redis_services import write_data_to_redis, get_data_from_redis
+from services.models import HandleKafkaTopic
 
 from typing import List
 
 Convoy_dict = defaultdict(ConvoyItem)
 OD_CARS = []
-
-
-class HandleKafkaTopic(ABC):
-    def __init__(self, msg):
-        self.msg = msg
-
-    def get_entities(self):
-        return self.model.from_json(self.msg)
-    
-    @abstractmethod
-    def execute(self):
-        print(f"Message from {self.__class__.__name__} received.")
 
 
 class TOP22_11_LPR_DONE(HandleKafkaTopic):
@@ -126,11 +113,4 @@ class TOP12_05_VEHICLE_COUNT_EVENT(HandleKafkaTopic):
     def execute(self):
         super().execute()
         print(json.loads(self.msg))
-
-
-class TOP12_04_LPR_ALERT(HandleKafkaTopic):
-    def execute(self):
-        super().execute()
-        print(f"Plate: {json.loads(self.msg)['body']['detection']['platesDetected']['text']} timestamp: {datetime.now()}")
-        print(self.msg)
 
