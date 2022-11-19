@@ -1,7 +1,7 @@
 from typing import List
 from collections import defaultdict
 
-from settings import CONVOY_THRESHOLD_NUMBER
+from settings import CONVOY_THRESHOLD_NUMBER, CIRCLING_THRESHOLD_NUMBER
 from services.models import HandleKafkaTopic
 from services.redis_services import write_data_to_redis, get_data_from_redis, get_and_remove_list_from_redis
 from services.ciram_services import post_ciram
@@ -60,11 +60,11 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
             if len(convoy_item.license_plates) > CONVOY_THRESHOLD_NUMBER:
                 plate.description = f"ALERT in {plate.area}: A convoy of vehicles is entering a restricted area. {convoy_item.license_plates} vehicles are entering restricted area {plate.area} in detected formation. The detected convoy fulfills the criterias for the vehicle count and the arrival proximity being small." + plate.description
             if plate_text in self.circling_plates:
-                plate.description = f"Alert: Returning vehicle. " + plate.description
+                plate.description = f"ALERT in {plate.area}: Vehicle {plate_text} is detected suspiciously entering/leaving restricted area {plate.area} at least {CIRCLING_THRESHOLD_NUMBER} times! The vehicle is suspected of circling the designated area. Further actions for vehicle containment and further investigation is strongly advised." + plate.description
             if self.stolen:
                 plate.description = f"ALERT in {plate.area}: The system has the detected vehicle {plate_text} registered as stolen. Immidiate suspect vehicle containment is advised." + plate.description
             if len(OD_CARS) > 0 and self.color not in OD_CARS:
-                plate.description = f"Alert: Fake plate." + plate.description
+                plate.description = f"ALERT in {plate.area}: There is a mismatch with the vehicle characteristics detected. The license plate must be fake. The system entry for the {self.color} vehicle {plate_text} does not mach the sensor detected characteristics." + plate.description
 
         post_ciram(lpr_msg.custom_to_dict())
         publish_to_kafka_plates(lpr_msg)
