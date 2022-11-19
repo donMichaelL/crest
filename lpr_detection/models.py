@@ -1,6 +1,7 @@
 import requests
+from time import time
 
-from settings import NATIONAL_DB_URL, SUSPECT_ATTRS_SET, VEHICLE_ATTRS_SET
+from settings import NATIONAL_DB_URL, SUSPECT_ATTRS_SET, VEHICLE_ATTRS_SET, CONVOY_THRESHOLD_TIME
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, Undefined, config
 from typing import List, Optional, Set
@@ -12,6 +13,18 @@ from services.geo_services import check_server_for_restricted_area
 class ConvoyItem:
     license_plates: Optional[Set[str]] = field(default_factory=set)
     timestamp_in_min: Optional[int] = 0
+
+    def add_licence_plates(self, plates_detected):
+        {
+            self.license_plates.add(plate.detection.platesDetected.text)
+            for plate in plates_detected
+        }
+    
+    def check_and_clear_licence_plates(self):
+        current_timestamp = int(time()) // 60
+        if current_timestamp - self.timestamp_in_min > CONVOY_THRESHOLD_TIME:
+            self.timestamp_in_min = current_timestamp
+            self.license_plates.clear()
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)

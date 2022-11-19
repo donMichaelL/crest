@@ -4,7 +4,7 @@ from time import time
 from typing import List
 from collections import defaultdict
 
-from settings import NATIONAL_DB_STOLEN, CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER
+from settings import NATIONAL_DB_STOLEN, CONVOY_THRESHOLD_NUMBER
 from services.models import HandleKafkaTopic
 from services.redis_services import write_data_to_redis, get_data_from_redis, get_and_remove_list_from_redis
 from services.ciram_services import post_ciram
@@ -13,10 +13,10 @@ from services.kafka_services import publish_to_kafka_areas, publish_to_kafka_pla
 from command_mission.models import AreaEntity, CameraEntity
 from .models import LPRMessageEntity, LPR, ConvoyItem
 
-Convoy_dict = defaultdict(ConvoyItem)
 
 class TOP22_11_LPR_DONE(HandleKafkaTopic):
     model = LPRMessageEntity
+    convoy_dict = defaultdict(ConvoyItem)
     LPR_COLOR = ""
 
     def _update_areas_capacity(self, areas: List[AreaEntity], plates: List[LPR]):
@@ -58,21 +58,15 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
             )
             publish_to_kafka_areas(lpr_msg.header.caseId, AreaEntity.schema().dumps(areas, many=True))  
 
-        convoy_item = Convoy_dict[lpr_msg.body.deviceId]
-        current_timestamp = int(time()) // 60
-
-        if current_timestamp - convoy_item.timestamp_in_min > CONVOY_THRESHOLD:
-            convoy_item.timestamp_in_min = current_timestamp
-            convoy_item.license_plates.clear()
-
-        for plate in lpr_msg.plates_detected:
-            convoy_item.license_plates.add(plate.detection.platesDetected.text)
+        convoy_item = self.convoy_dict[lpr_msg.body.deviceId]
+        convoy_item.check_and_clear_licence_plates()
+        convoy_item.add_licence_plates(lpr_msg.plates_detected)
 
         OD_CARS = get_and_remove_list_from_redis("OD_CARS")
         
         for plate in lpr_msg.plates_detected:
             if len(convoy_item.license_plates) > CONVOY_THRESHOLD_NUMBER:
-                plate.description = f"Alert: Convoy. " + plate.description
+                plate.description = f"ALERT in {plate.area}: A convoy of vehicles is entering a restricted area. {convoy_item.license_plates} vehicles are entering restricted area {plate.area} in detected formation. The detected convoy fulfills the criterias for the vehicle count and the arrival proximity being small." + plate.description
             if plate.detection.platesDetected.text in self.circling_plates:
                 plate.description = f"Alert: Returning vehicle. " + plate.description
             if self._check_if_vehicle_stolen(plate.detection.platesDetected.text):

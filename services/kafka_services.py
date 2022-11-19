@@ -15,7 +15,7 @@ def publishKafka(topic: str, header: dict, body: dict):
     future = producer.send(topic, {"header": header, "body": body})
     try:
         _ = future.get(timeout=10)
-        print("Message was sent to Kafka!")
+        print(f"Message in topic: {topic} was sent to Kafka!")
     except Exception:
         print("RE")
         pass
