@@ -19,7 +19,7 @@ class Application:
     
     def run(self):
         self.consumer.subscribe(KAFKA_TOPICS)
-        for message in consumer:
+        for message in self.consumer:
             topic_class = {
                 "TOP21_01_COMMAND_CENTER_MISSION": TOP21_01_COMMAND_CENTER_MISSION,
                 "TOP12_04_LPR_ALERT": TOP12_04_LPR_ALERT,
@@ -33,12 +33,14 @@ class Application:
 
             topic_class(message.value).execute()
 
-
-if __name__ == "__main__":
+def initial(group_id):
     consumer = KafkaConsumer(
-        group_id=str(random()),
+        group_id=group_id,
         auto_offset_reset=OFFSET_RESET,
         bootstrap_servers=BOOTSTRAP_SERVER,
     )
     app = Application(consumer)
     app.run()
+
+if __name__ == "__main__":
+    initial(str(random()))
