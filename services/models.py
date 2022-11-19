@@ -10,4 +10,4 @@ class HandleKafkaTopic(ABC):
     
     @abstractmethod
     def execute(self):
-        print(f"Message from {self.__class__.__name__} received.")
+        print(f">>>> Message from {self.__class__.__name__} received.")

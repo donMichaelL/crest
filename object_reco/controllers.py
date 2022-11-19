@@ -26,6 +26,6 @@ class TOP22_02_OBJECT_RECO_DONE(HandleKafkaTopic):
         _, _, area = check_server_for_restricted_area(objects_msg.body.deviceId)
         for vehicle in FORBIDDEN_VEHICLE_CATEGORIES:
             if vehicle in object_descr:
-                objects_msg.body.objectsDetected["description"] = f"ALERT in {area}: {vehicle} type is forbidden in {area}"
+                objects_msg.body.objectsDetected["description"] = f"ALERT in {area}: {vehicle} type is forbidden in {area}."
                 publish_to_kafka_forbidden_vehicle(objects_msg.header.caseId, objects_msg.to_dict()["objectsDet"])
         post_ciram(objects_msg.custom_to_dict())

@@ -4,11 +4,12 @@ from time import time
 from typing import List
 from collections import defaultdict
 
-from settings import NATIONAL_DB_STOLEN, CONVOY_THRESHOLD_NUMBER
+from settings import CONVOY_THRESHOLD_NUMBER
 from services.models import HandleKafkaTopic
 from services.redis_services import write_data_to_redis, get_data_from_redis, get_and_remove_list_from_redis
 from services.ciram_services import post_ciram
 from services.kafka_services import publish_to_kafka_areas, publish_to_kafka_plates
+from services.national_db_services import get_vehicle_attributes
 
 from command_mission.models import AreaEntity, CameraEntity
 from .models import LPRMessageEntity, LPR, ConvoyItem
@@ -17,7 +18,6 @@ from .models import LPRMessageEntity, LPR, ConvoyItem
 class TOP22_11_LPR_DONE(HandleKafkaTopic):
     model = LPRMessageEntity
     convoy_dict = defaultdict(ConvoyItem)
-    LPR_COLOR = ""
 
     def _update_areas_capacity(self, areas: List[AreaEntity], plates: List[LPR]):
         self.circling_plates = []
@@ -35,17 +35,6 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
                         area.remove_vehicle(licence_plate)
         write_data_to_redis("areas", AreaEntity.schema().dumps(areas, many=True))
         return areas
-    
-    def _check_if_vehicle_stolen(self, plate) -> bool:
-        response = requests.get(NATIONAL_DB_STOLEN + plate)
-        try:
-            msg = response.json()[0]
-            self.LPR_COLOR = msg["color"]
-            if msg['stolen'] == 'true':
-                return True
-            return False
-        except Exception as err:
-            return False
     
     def _create_vehicle_count_msg(self, lpr_msg):
         if stored_area := get_data_from_redis('areas'):
@@ -68,13 +57,15 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
         OD_CARS = get_and_remove_list_from_redis("OD_CARS")
         
         for plate in lpr_msg.plates_detected:
+            plate_text = plate.detection.platesDetected.text
+            self.color, self.stolen = get_vehicle_attributes(plate_text)
             if len(convoy_item.license_plates) > CONVOY_THRESHOLD_NUMBER:
                 plate.description = f"ALERT in {plate.area}: A convoy of vehicles is entering a restricted area. {convoy_item.license_plates} vehicles are entering restricted area {plate.area} in detected formation. The detected convoy fulfills the criterias for the vehicle count and the arrival proximity being small." + plate.description
-            if plate.detection.platesDetected.text in self.circling_plates:
+            if plate_text in self.circling_plates:
                 plate.description = f"Alert: Returning vehicle. " + plate.description
-            if self._check_if_vehicle_stolen(plate.detection.platesDetected.text):
-                plate.description = f"Alert: Stolen vehicle. " + plate.description
-            if len(OD_CARS) > 0 and self.LPR_COLOR not in OD_CARS:
+            if self.stolen:
+                plate.description = f"ALERT in {plate.area}: The system has the detected vehicle {plate_text} registered as stolen. Immidiate suspect vehicle containment is advised." + plate.description
+            if len(OD_CARS) > 0 and self.color not in OD_CARS:
                 plate.description = f"Alert: Fake plate." + plate.description
 
         post_ciram(lpr_msg.custom_to_dict())
