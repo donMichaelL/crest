@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from time import time
 
-from models import ConvoyItem, LPRMessageEntity, FaceDetectionEntity, ObjectDetectionEntity, CODDetectionEntity, AreaEntity, CameraEntity, LPR
+from models import ConvoyItem, LPRMessageEntity, ObjectDetectionEntity, CODDetectionEntity, AreaEntity, CameraEntity, LPR
 
 from settings import FUSION_GEO, CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER, FORBIDDEN_VEHICLE_CATEGORIES, NATIONAL_DB_STOLEN, VEHICLE_COLOUR_LIST
 from utils import publish_to_kafka_forbidden_vehicle, publish_to_kafka_plates, post_ciram, write_data_to_redis, get_data_from_redis, publish_to_kafka_areas, check_server_for_restricted_area
@@ -120,14 +120,6 @@ class TOP21_01_COMMAND_CENTER_MISSION(HandleKafkaTopic):
         self._store_areas(data_dict)
         self._store_cameras(data_dict)
         self._publish_to_geo_areas()
-
-
-class TOP22_05_FACE_RECO_DONE(HandleKafkaTopic):
-    model = FaceDetectionEntity
-
-    def execute(self):
-        super().execute()
-        post_ciram(self.get_entities().custom_to_dict())
 
 
 class TOP10_02_COD_ALERT(HandleKafkaTopic):

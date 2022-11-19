@@ -2,9 +2,10 @@ from kafka import KafkaConsumer
 from random import random
 
 from settings import BOOTSTRAP_SERVER, KAFKA_TOPICS, OFFSET_RESET
-from controllers import TOP21_01_COMMAND_CENTER_MISSION, TOP12_05_VEHICLE_COUNT_EVENT, TOP12_04_LPR_ALERT, TOP22_11_LPR_DONE, TOP22_05_FACE_RECO_DONE, TOP22_02_OBJECT_RECO_DONE, TOP10_02_COD_ALERT
+from controllers import TOP21_01_COMMAND_CENTER_MISSION, TOP12_05_VEHICLE_COUNT_EVENT, TOP12_04_LPR_ALERT, TOP22_11_LPR_DONE, TOP22_02_OBJECT_RECO_DONE, TOP10_02_COD_ALERT
 
 from activity_reco.controllers import TOP22_08_ACTIVITY_RECO_DONE
+from face_reco.controllers import TOP22_05_FACE_RECO_DONE
 
 class Application:
     def __init__(self, consumer: KafkaConsumer):
