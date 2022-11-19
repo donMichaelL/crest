@@ -1,6 +1,3 @@
-import requests
-from time import time
-
 from typing import List
 from collections import defaultdict
 
@@ -18,6 +15,7 @@ from .models import LPRMessageEntity, LPR, ConvoyItem
 class TOP22_11_LPR_DONE(HandleKafkaTopic):
     model = LPRMessageEntity
     convoy_dict = defaultdict(ConvoyItem)
+    circling_plates = []
 
     def _update_areas_capacity(self, areas: List[AreaEntity], plates: List[LPR]):
         self.circling_plates = []
