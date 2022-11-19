@@ -6,7 +6,7 @@ from collections import defaultdict
 
 from settings import NATIONAL_DB_STOLEN, CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER
 from services.models import HandleKafkaTopic
-from services.redis_services import write_data_to_redis, get_data_from_redis
+from services.redis_services import write_data_to_redis, get_data_from_redis, get_and_remove_list_from_redis
 from services.ciram_services import post_ciram
 from services.kafka_services import publish_to_kafka_areas, publish_to_kafka_plates
 
@@ -14,8 +14,6 @@ from command_mission.models import AreaEntity, CameraEntity
 from .models import LPRMessageEntity, LPR, ConvoyItem
 
 Convoy_dict = defaultdict(ConvoyItem)
-OD_CARS = []
-
 
 class TOP22_11_LPR_DONE(HandleKafkaTopic):
     model = LPRMessageEntity
@@ -69,6 +67,8 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
 
         for plate in lpr_msg.plates_detected:
             convoy_item.license_plates.add(plate.detection.platesDetected.text)
+
+        OD_CARS = get_and_remove_list_from_redis("OD_CARS")
         
         for plate in lpr_msg.plates_detected:
             if len(convoy_item.license_plates) > CONVOY_THRESHOLD_NUMBER:
