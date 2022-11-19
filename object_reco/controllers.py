@@ -4,7 +4,7 @@ from services.geo_services import check_server_for_restricted_area
 from services.kafka_services import publish_to_kafka_forbidden_vehicle
 from services.ciram_services import post_ciram
 
-from controllers import OD_CARS
+from lpr_detection.controllers import OD_CARS
 
 from .models import ObjectDetectionEntity
 

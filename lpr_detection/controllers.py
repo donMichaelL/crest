@@ -1,16 +1,17 @@
 import requests
-import json
-from collections import defaultdict
 from time import time
 
-from models import ConvoyItem, LPRMessageEntity, AreaEntity, CameraEntity, LPR
-
-from settings import CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER, NATIONAL_DB_STOLEN
-from utils import publish_to_kafka_plates, post_ciram, publish_to_kafka_areas
-from services.redis_services import write_data_to_redis, get_data_from_redis
-from services.models import HandleKafkaTopic
-
 from typing import List
+from collections import defaultdict
+
+from settings import NATIONAL_DB_STOLEN, CONVOY_THRESHOLD, CONVOY_THRESHOLD_NUMBER
+from services.models import HandleKafkaTopic
+from services.redis_services import write_data_to_redis, get_data_from_redis
+from services.ciram_services import post_ciram
+from services.kafka_services import publish_to_kafka_areas, publish_to_kafka_plates
+
+from command_mission.models import AreaEntity, CameraEntity
+from .models import LPRMessageEntity, LPR, ConvoyItem
 
 Convoy_dict = defaultdict(ConvoyItem)
 OD_CARS = []
@@ -81,5 +82,3 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
 
         post_ciram(lpr_msg.custom_to_dict())
         publish_to_kafka_plates(lpr_msg)
-
-

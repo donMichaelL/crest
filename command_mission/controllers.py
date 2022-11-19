@@ -4,7 +4,7 @@ from services.geo_services import publish_to_geo_areas
 from services.redis_services import write_data_to_redis
 from services.models import HandleKafkaTopic
 
-from models import AreaEntity, CameraEntity
+from .models import AreaEntity, CameraEntity
 
 
 class TOP21_01_COMMAND_CENTER_MISSION(HandleKafkaTopic):

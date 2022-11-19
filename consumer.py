@@ -2,7 +2,6 @@ from kafka import KafkaConsumer
 from random import random
 
 from settings import BOOTSTRAP_SERVER, KAFKA_TOPICS, OFFSET_RESET
-from controllers import TOP22_11_LPR_DONE
 
 from command_mission.controllers import TOP21_01_COMMAND_CENTER_MISSION
 from activity_reco.controllers import TOP22_08_ACTIVITY_RECO_DONE
@@ -11,6 +10,7 @@ from cod_reco.controllers import TOP10_02_COD_ALERT
 from lpr_alert.controllers import TOP12_04_LPR_ALERT
 from vehicle_count_alert.controllers import TOP12_05_VEHICLE_COUNT_EVENT
 from object_reco.controllers import TOP22_02_OBJECT_RECO_DONE
+from lpr_detection.controllers import TOP22_11_LPR_DONE
 
 
 class Application:
