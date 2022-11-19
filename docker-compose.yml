@@ -11,6 +11,7 @@ services:
       - FUSION_GEO=http://geo:8000/
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - MINIMAL=1
     command: >
       sh -c "python consumer.py"
     depends_on:
@@ -25,6 +26,14 @@ services:
       - "8000:8000"
   redis:
     image: redis:5
+  # fusion_ciram:
+  #   image: donmichael/crest-fusion-ciram
+  #   environment:
+  #     - BOOTSTRAP_SERVER=10.129.150.90:9092
+  #     - CIRAM_URL=http://ciram-api:5050/getDetections
+  #   command: >
+  #     sh -c "python consumer.py"
+  #   restart: always
   # ciram-api:
   #   image: sofkost/crestthreat:latest
   #   ports:
