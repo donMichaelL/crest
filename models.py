@@ -1,4 +1,3 @@
-from pickle import FALSE
 import requests
 
 from settings import NATIONAL_DB_URL, SUSPECT_ATTRS_SET, VEHICLE_ATTRS_SET, CIRCLING_THRESHOLD, CIRCLING_THRESHOLD_NUMBER
@@ -214,21 +213,3 @@ class ObjectDetectionEntity:
         result['objectsDet']['caseID'] = self.header.caseId
         return result
 
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass
-class CODDetectionBodyEntity:
-    deviceID: str = field(metadata=config(field_name="device-ID"))
-    imageURL: str
-    concealedObjects: List
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass
-class CODDetectionEntity:
-    header: Header = field(metadata=config(exclude=lambda x:True))
-    body: CODDetectionBodyEntity = field(metadata=config(field_name="concealedObjectsDet"))
-    
-    def custom_to_dict(self):
-        result = self.to_dict()
-        result['concealedObjectsDet']['caseID'] = self.header.caseId
-        return result
