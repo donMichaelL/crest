@@ -9,6 +9,33 @@ from typing import List, Optional, Set
 from services.geo_services import check_server_for_restricted_area
 
 
+DEFAULT_SUSPECT = {
+    "age": 0,
+    "id": 0,
+    "profession": "",
+    "nickname": "",
+    "firstName": "",
+    "email": "",
+    "lastName": "",
+    "lastKnownAddress": "",
+    "photo": ""
+}
+
+DEFAULT_VEHICLE = {
+    "licenseState": "",
+    "model": "",
+    "type": "",
+    "id": 0,
+    "color": "",
+    "vin": "",
+    "manufacturer": "",
+    "registeredOwner": "",
+    "year": 0,
+    "description": "",
+    "licenseNumber": "",
+    "icon": ""
+  }
+
 @dataclass
 class ConvoyItem:
     license_plates: Optional[Set[str]] = field(default_factory=set)
@@ -31,17 +58,17 @@ class ConvoyItem:
 @dataclass
 class PlateDetectedEntity:
     text: str
-    score: float
+    scores: float
     url: str
     car_id: int
-    timestamp: str
-    country: str
+    timestamp: List[str]
+    country: List[str]
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
 @dataclass
 class DetectionEntity:
-    deviceID: str
+    deviceId: str
     platesDetected: PlateDetectedEntity
 
 
@@ -64,20 +91,22 @@ class LPR:
                 key: suspect_dict[key]
                 for key in suspect_dict.keys() & SUSPECT_ATTRS_SET
             }
+   
             for vehicle in suspect_dict["vehicles"]:
                 if vehicle["vehicleDetails"]["licenseNumber"] == text:
                     vehicles_dict = vehicle["vehicleDetails"]
                     self.vehicle = {
                         key: vehicles_dict[key]
                         for key in vehicles_dict.keys() & VEHICLE_ATTRS_SET
-                    }
-        except Exception as err:
-            print(str(err))
+                    }                        
+        except Exception as err:    
+            self.suspect = DEFAULT_SUSPECT.copy()
+            self.vehicle = DEFAULT_VEHICLE.copy()
 
     def __post_init__(self):
         self.get_info_from_db()
-        self.severity, self.description, self.area = check_server_for_restricted_area(self.detection.deviceID)
-        if self.suspect != None:
+        self.severity, self.description, self.area = check_server_for_restricted_area(self.detection.deviceId)
+        if self.suspect["id"] != 0:
             self.description = f"ALERT in {self.area}: The vehicle {self.detection.platesDetected.text} possibly is operated by suspect {self.suspect['lastName']}! Take immediate actions for suspect vehicle containment."
         
 
@@ -127,14 +156,14 @@ class LPRMessageEntity:
         self.plates_detected = [
             LPR.from_dict({
                 "detection": {
-                    "deviceID": self.body.deviceId,
+                    "deviceId": self.body.deviceId,
                     "platesDetected": {
                         "text": value.replace(' ', '%20'),
-                        "score": self.body.platesDetected.scores[index],
+                        "scores": self.body.platesDetected.scores[index],
                         "url": (self.body.platesDetected.url[index: ]+[''])[0],
                         "car_id": (self.body.platesDetected.car_id[index: ]+[''])[0],
-                        "timestamp": (self.body.platesDetected.timestamp[index: ]+[''])[0],
-                        "country": (self.body.platesDetected.country[index: ]+[''])[0],
+                        "timestamp": [(self.body.platesDetected.timestamp[index: ]+[''])[0]],
+                        "country": [(self.body.platesDetected.country[index: ]+[''])[0]],
                     }
                 }
             }) for index, value in enumerate(self.body.platesDetected.text)  if self.body.platesDetected.scores[index] >= 0.7

@@ -21,7 +21,7 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
         self.circling_plates = []
         for plate in plates:
             area = [area for area in areas if area.name == plate.area][0]
-            if camera := get_data_from_redis(plate.detection.deviceID):
+            if camera := get_data_from_redis(plate.detection.deviceId):
                 licence_plate = plate.detection.platesDetected.text
                 if CameraEntity.from_json(camera).is_cameraIn():
                     if licence_plate not in area.licensePlates:
@@ -65,6 +65,7 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
                 plate.description = f"ALERT in {plate.area}: The system has the detected vehicle {plate_text} registered as stolen. Immidiate suspect vehicle containment is advised." + plate.description
             if len(OD_CARS) > 0 and self.color not in OD_CARS:
                 plate.description = f"ALERT in {plate.area}: There is a mismatch with the vehicle characteristics detected. The license plate must be fake. The system entry for the {self.color} vehicle {plate_text} does not mach the sensor detected characteristics." + plate.description
-
+            plate.vehicle["manufacturer"] = plate.description + plate.vehicle["manufacturer"]
         post_ciram(lpr_msg.custom_to_dict())
+        print(lpr_msg.custom_to_dict())
         publish_to_kafka_plates(lpr_msg)
