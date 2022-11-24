@@ -57,7 +57,7 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
         for plate in lpr_msg.plates_detected:
             plate_text = plate.detection.platesDetected.text
             self.color, self.stolen = get_vehicle_attributes(plate_text)
-            if len(convoy_item.license_plates) > CONVOY_THRESHOLD_NUMBER:
+            if len(convoy_item.license_plates) >= CONVOY_THRESHOLD_NUMBER:                
                 plate.description = f"ALERT in {plate.area}: A convoy of vehicles is entering a restricted area. {convoy_item.license_plates} vehicles are entering restricted area {plate.area} in detected formation. The detected convoy fulfills the criterias for the vehicle count and the arrival proximity being small." + plate.description
             if plate_text in self.circling_plates:
                 plate.description = f"ALERT in {plate.area}: Vehicle {plate_text} is detected suspiciously entering/leaving restricted area {plate.area} at least {CIRCLING_THRESHOLD_NUMBER} times! The vehicle is suspected of circling the designated area. Further actions for vehicle containment and further investigation is strongly advised." + plate.description
@@ -67,5 +67,4 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
                 plate.description = f"ALERT in {plate.area}: There is a mismatch with the vehicle characteristics detected. The license plate must be fake. The system entry for the {self.color} vehicle {plate_text} does not mach the sensor detected characteristics." + plate.description
             plate.vehicle["manufacturer"] = plate.description + plate.vehicle["manufacturer"]
         post_ciram(lpr_msg.custom_to_dict())
-        print(lpr_msg.custom_to_dict())
         publish_to_kafka_plates(lpr_msg)

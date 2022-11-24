@@ -54,7 +54,7 @@ class AreaEntity:
                 for timestamp in circling_plate.timestamps_in_min[:]:
                     if current_timestamp_in_min - timestamp > CIRCLING_THRESHOLD:
                         circling_plate.timestamps_in_min.remove(timestamp)
-            if len(circling_plate.timestamps_in_min) > CIRCLING_THRESHOLD_NUMBER:
+            if len(circling_plate.timestamps_in_min) >= CIRCLING_THRESHOLD_NUMBER:
                 self.circlingPlatesReport.append(licence_plate)
             elif licence_plate in self.circlingPlatesReport:
                 self.circlingPlatesReport.remove(licence_plate)
