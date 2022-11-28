@@ -1,6 +1,8 @@
 import requests
 from time import time
 
+from datetime import datetime
+
 from settings import NATIONAL_DB_URL, SUSPECT_ATTRS_SET, VEHICLE_ATTRS_SET, CONVOY_THRESHOLD_TIME
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, Undefined, config
@@ -162,7 +164,7 @@ class LPRMessageEntity:
                         "scores": self.body.platesDetected.scores[index],
                         "url": (self.body.platesDetected.url[index: ]+[''])[0],
                         "car_id": (self.body.platesDetected.car_id[index: ]+[''])[0],
-                        "timestamp": [(self.body.platesDetected.timestamp[index: ]+[''])[0]],
+                        "timestamp": [str(datetime.utcnow().isoformat())],
                         "country": [(self.body.platesDetected.country[index: ]+[''])[0]],
                     }
                 }
