@@ -20,7 +20,10 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
     def _update_areas_capacity(self, areas: List[AreaEntity], plates: List[LPR]):
         self.circling_plates = []
         for plate in plates:
-            area = [area for area in areas if area.name == plate.area][0]
+            try:
+                area = [area for area in areas if area.name == plate.area][0]
+            except:
+                continue
             if camera := get_data_from_redis(plate.detection.deviceId):
                 licence_plate = plate.detection.platesDetected.text
                 if CameraEntity.from_json(camera).is_cameraIn():
@@ -57,14 +60,15 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
         for plate in lpr_msg.plates_detected:
             plate_text = plate.detection.platesDetected.text
             self.color, self.stolen = get_vehicle_attributes(plate_text)
+            area_name = plate.area if plate.area else "a non restricted area"
             if len(convoy_item.license_plates) >= CONVOY_THRESHOLD_NUMBER:                
-                plate.description = f"ALERT in {plate.area}: A convoy of vehicles is entering a restricted area. {convoy_item.license_plates} vehicles are entering restricted area {plate.area} in detected formation. The detected convoy fulfills the criterias for the vehicle count and the arrival proximity being small." + plate.description
+                plate.description = f"ALERT in {area_name}: A convoy of vehicles is entering the area. {convoy_item.license_plates} vehicles are entering the area in detected formation. The detected convoy fulfills the criterias for the vehicle count and the arrival proximity being small." + plate.description
             if plate_text in self.circling_plates:
-                plate.description = f"ALERT in {plate.area}: Vehicle {plate_text} is detected suspiciously entering/leaving restricted area {plate.area} at least {CIRCLING_THRESHOLD_NUMBER} times! The vehicle is suspected of circling the designated area. Further actions for vehicle containment and further investigation is strongly advised." + plate.description
+                plate.description = f"ALERT in {area_name}: Vehicle {plate_text} is detected suspiciously entering/leaving the area at least {CIRCLING_THRESHOLD_NUMBER} times! The vehicle is suspected of circling the designated area. Further actions for vehicle containment and further investigation is strongly advised." + plate.description
             if self.stolen:
-                plate.description = f"ALERT in {plate.area}: The system has the detected vehicle {plate_text} registered as stolen. Immidiate suspect vehicle containment is advised." + plate.description
+                plate.description = f"ALERT in {area_name}: The system has the detected vehicle {plate_text} registered as stolen. Immidiate suspect vehicle containment is advised." + plate.description
             if len(OD_CARS) > 0 and self.color not in OD_CARS:
-                plate.description = f"ALERT in {plate.area}: There is a mismatch with the vehicle characteristics detected. The license plate must be fake. The system entry for the {self.color} vehicle {plate_text} does not mach the sensor detected characteristics." + plate.description
+                plate.description = f"ALERT in {area_name}: There is a mismatch with the vehicle characteristics detected. The license plate must be fake. The system entry for the {self.color} vehicle {plate_text} does not mach the sensor detected characteristics." + plate.description
             plate.vehicle["manufacturer"] = plate.description + plate.vehicle["manufacturer"]
         post_ciram(lpr_msg.custom_to_dict())
         publish_to_kafka_plates(lpr_msg)

@@ -108,8 +108,9 @@ class LPR:
     def __post_init__(self):
         self.get_info_from_db()
         self.severity, self.description, self.area = check_server_for_restricted_area(self.detection.deviceId)
+        area_name = self.area if self.area else "a non restricted area"
         if self.suspect["id"] != 0:
-            self.description = f"ALERT in {self.area}: The vehicle {self.detection.platesDetected.text} possibly is operated by suspect {self.suspect['lastName']}! Take immediate actions for suspect vehicle containment."
+            self.description = f"ALERT in {area_name}: The vehicle {self.detection.platesDetected.text} possibly is operated by suspect {self.suspect['lastName']}! Take immediate actions for suspect vehicle containment."
         
 
     def to_dict(self):
