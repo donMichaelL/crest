@@ -1,7 +1,7 @@
 from settings import VEHICLE_COLOUR_LIST, FORBIDDEN_VEHICLE_CATEGORIES
 from services.models import HandleKafkaTopic
 from services.geo_services import check_server_for_restricted_area
-from services.kafka_services import publish_to_kafka_forbidden_vehicle
+from services.kafka_services import publish_to_kafka
 from services.redis_services import write_list_to_redis
 from services.ciram_services import post_ciram
 
@@ -27,5 +27,5 @@ class TOP22_02_OBJECT_RECO_DONE(HandleKafkaTopic):
         for vehicle in FORBIDDEN_VEHICLE_CATEGORIES:
             if vehicle in object_descr:
                 objects_msg.body.objectsDetected["description"] = f"ALERT in {area}: {vehicle} type is forbidden in {area}."
-                publish_to_kafka_forbidden_vehicle(objects_msg.header.caseId, objects_msg.to_dict()["objectsDet"])
+                publish_to_kafka("TOP22_02_OBJECT_RECO_DONE", objects_msg.header.caseId, objects_msg.to_dict()["objectsDet"])
         post_ciram(objects_msg.custom_to_dict())

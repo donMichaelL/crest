@@ -5,7 +5,7 @@ from settings import CONVOY_THRESHOLD_NUMBER, CIRCLING_THRESHOLD_NUMBER
 from services.models import HandleKafkaTopic
 from services.redis_services import write_data_to_redis, get_data_from_redis, get_and_remove_list_from_redis
 from services.ciram_services import post_ciram
-from services.kafka_services import publish_to_kafka_areas, publish_to_kafka_plates
+from services.kafka_services import publish_to_kafka
 from services.national_db_services import get_vehicle_attributes
 
 from command_mission.models import AreaEntity, CameraEntity
@@ -36,7 +36,7 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
     def _calculate_vehicle_count(self, lpr_msg):
         if stored_area := get_data_from_redis('areas'):
             areas = self._update_areas_capacity(AreaEntity.schema().loads(stored_area, many=True), lpr_msg.plates_detected)
-            publish_to_kafka_areas(lpr_msg.header.caseId, AreaEntity.schema().dumps(areas, many=True))
+            publish_to_kafka("TOP12_05_VEHICLE_COUNT_EVENT", lpr_msg.header.caseId, {"areas": AreaEntity.schema().dump(areas, many=True)})
             write_data_to_redis("areas", AreaEntity.schema().dumps(areas, many=True))
 
     def execute(self):
@@ -64,5 +64,7 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
             if len(OD_CARS) > 0 and self.color not in OD_CARS:
                 plate.description = f"ALERT in {area_name}: There is a mismatch with the vehicle characteristics detected. The license plate must be fake. The system entry for the {self.color} vehicle {plate_text} does not mach the sensor detected characteristics." + plate.description
             plate.vehicle["manufacturer"] = plate.description + plate.vehicle["manufacturer"]
+            publish_to_kafka("TOP12_04_LPR_ALERT", lpr_msg.header.caseId, plate.to_dict())
+
         post_ciram(lpr_msg.custom_to_dict())
-        publish_to_kafka_plates(lpr_msg)
+        

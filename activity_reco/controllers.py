@@ -1,4 +1,4 @@
-from services.kafka_services import publish_to_kafka_person_lingering
+from services.kafka_services import publish_to_kafka
 from services.geo_services import check_server_for_restricted_area
 from services.models import HandleKafkaTopic
 from settings import PERSON_LINGERING_THRESHOLD
@@ -31,4 +31,4 @@ class TOP22_08_ACTIVITY_RECO_DONE(HandleKafkaTopic):
                         new_descr = f"ALERT in {area}: A person is detected lingering inside the restricted area {area}. This bahaviour is deemed suspicious and further actions are advised."
                     activity.body.activityDetected.activityDescription[index] = new_descr
         if found_alert:
-            publish_to_kafka_person_lingering(activity.header.caseId, activity.to_dict()["body"])
+            publish_to_kafka("TOP22_08_ACTIVITY_RECO_DONE", activity.header.caseId, activity.to_dict()["body"])
