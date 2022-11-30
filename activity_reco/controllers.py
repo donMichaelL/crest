@@ -1,6 +1,7 @@
 from services.kafka_services import publish_to_kafka_person_lingering
 from services.geo_services import check_server_for_restricted_area
 from services.models import HandleKafkaTopic
+from settings import PERSON_LINGERING_THRESHOLD
 
 from .models import ActivityRecoEntity
 
@@ -23,8 +24,7 @@ class TOP22_08_ACTIVITY_RECO_DONE(HandleKafkaTopic):
         found_alert = False
         for index, className in enumerate(activity.body.activityDetected.className):
             if className == "PersonStands":
-                print('className')
-                if activity.body.activityDetected.activityDuration[index] > 2 and description_lenght > index:
+                if activity.body.activityDetected.activityDuration[index] > PERSON_LINGERING_THRESHOLD and description_lenght > index:
                     found_alert = True
                     new_descr = f"ALERT in a non restricted area: A person is detected lingering. This bahaviour is deemed suspicious and further actions are advised."
                     if area:

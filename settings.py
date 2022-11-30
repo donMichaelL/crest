@@ -67,6 +67,8 @@ FORBIDDEN_VEHICLE_CATEGORIES = [
     "truck"
 ]
 
+PERSON_LINGERING_THRESHOLD = 10
+
 SUSPECT_ATTRS_SET = {
     "id",
     "firstName",
