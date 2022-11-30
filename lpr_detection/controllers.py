@@ -17,39 +17,33 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
     convoy_dict = defaultdict(ConvoyItem)
     circling_plates = []
 
-    def _update_areas_capacity(self, areas: List[AreaEntity], plates: List[LPR]):
+    def _update_areas_capacity(self, areas: List[AreaEntity], platesLPR: List[LPR]) -> List[AreaEntity]:
         self.circling_plates = []
-        for plate in plates:
-            try:
-                area = [area for area in areas if area.name == plate.area][0]
-            except:
-                continue
-            if camera := get_data_from_redis(plate.detection.deviceId):
-                licence_plate = plate.detection.platesDetected.text
-                if CameraEntity.from_json(camera).is_cameraIn():
-                    if licence_plate not in area.licensePlates:
-                        area.add_vehicle(licence_plate)
-                        area.add_circling_vehicle(licence_plate)
-                        self.circling_plates.extend(area._check_vehicle_circling(licence_plate))
-                else:
-                    if licence_plate in area.licensePlates:
-                        area.remove_vehicle(licence_plate)
-        write_data_to_redis("areas", AreaEntity.schema().dumps(areas, many=True))
+        for plate in platesLPR:
+            deviceId, licence_plate = plate.detection.deviceId, plate.detection.platesDetected.text
+            if camera := CameraEntity.create_from_redis(deviceId):
+                if area := next((area for area in areas if area.name == camera.area), None):
+                    if camera.is_cameraIn():
+                        if licence_plate not in area.licensePlates:
+                            area.add_vehicle(licence_plate)
+                            area.add_circling_vehicle(licence_plate)
+                            self.circling_plates.extend(area._check_vehicle_circling(licence_plate))
+                    else:
+                        if licence_plate in area.licensePlates:
+                            area.remove_vehicle(licence_plate)
         return areas
     
-    def _create_vehicle_count_msg(self, lpr_msg):
+    def _calculate_vehicle_count(self, lpr_msg):
         if stored_area := get_data_from_redis('areas'):
-            areas = self._update_areas_capacity(
-                AreaEntity.schema().loads(stored_area, many=True),
-                lpr_msg.plates_detected
-            )
-            publish_to_kafka_areas(lpr_msg.header.caseId, AreaEntity.schema().dumps(areas, many=True))  
+            areas = self._update_areas_capacity(AreaEntity.schema().loads(stored_area, many=True), lpr_msg.plates_detected)
+            publish_to_kafka_areas(lpr_msg.header.caseId, AreaEntity.schema().dumps(areas, many=True))
+            write_data_to_redis("areas", AreaEntity.schema().dumps(areas, many=True))
 
     def execute(self):
         super().execute()
         lpr_msg = self.get_entities()
 
-        self._create_vehicle_count_msg(lpr_msg)
+        self._calculate_vehicle_count(lpr_msg)
 
         convoy_item = self.convoy_dict[lpr_msg.body.deviceId]
         convoy_item.check_and_clear_licence_plates()

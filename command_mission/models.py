@@ -4,15 +4,23 @@ from dataclasses_json import dataclass_json, Undefined, config
 from typing import List, Optional
 from time import time
 
+from services.redis_services import get_data_from_redis
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
 @dataclass
 class CameraEntity:
     deviceId: str
     areaInOut: str = ""
+    area: str = ""
 
     def is_cameraIn(self):
         return self.areaInOut == 'In'
+    
+    @classmethod
+    def create_from_redis(cls, deviceId: str):
+        if camera_json := get_data_from_redis(deviceId):
+            return CameraEntity.from_json(camera_json)
+        return None
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)

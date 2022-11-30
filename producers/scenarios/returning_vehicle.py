@@ -47,3 +47,5 @@ time.sleep(1)
 send_to_kafka("TOP22_11_LPR_DONE", SUSPECT_PLATE)
 
 time.sleep(1)
+
+# VehiclesIn: 3 VehicleCount: 1 VehicleOut: 2
