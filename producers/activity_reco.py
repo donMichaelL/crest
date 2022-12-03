@@ -39,7 +39,7 @@ msg = {
             "A person is standing with at least one foot in contact with the ground and no net translation in movement for short time scales. Must be standing for a minimum of 2 s to add annotation."
          ],
          "activityDuration":[
-            3.83
+            13.83
          ]
       },
       "timestampProcessing":"2022-11-10T08:04:01.973691Z",

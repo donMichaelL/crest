@@ -26,9 +26,7 @@ class TOP22_08_ACTIVITY_RECO_DONE(HandleKafkaTopic):
             if className == "PersonStands":
                 if activity.body.activityDetected.activityDuration[index] > PERSON_LINGERING_THRESHOLD and description_lenght > index:
                     found_alert = True
-                    new_descr = f"ALERT in a non restricted area: A person is detected lingering. This bahaviour is deemed suspicious and further actions are advised."
-                    if area:
-                        new_descr = f"ALERT in {area}: A person is detected lingering inside the restricted area {area}. This bahaviour is deemed suspicious and further actions are advised."
+                    new_descr = f"[PersonLingering] ALERT in {area or 'non restricted area'}: A person is detected lingering inside. This bahaviour is deemed suspicious and further actions are advised."
                     activity.body.activityDetected.activityDescription[index] = new_descr
         if found_alert:
             publish_to_kafka("TOP22_08_ACTIVITY_RECO_DONE", activity.header.caseId, activity.to_dict()["body"])

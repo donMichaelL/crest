@@ -56,13 +56,13 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
             self.color, self.stolen = get_vehicle_attributes(plate_text)
             area_name = plate.area if plate.area else "a non restricted area"
             if len(convoy_item.license_plates) >= CONVOY_THRESHOLD_NUMBER:                
-                plate.description = f"ALERT in {area_name}: A convoy of vehicles is entering the area. {convoy_item.license_plates} vehicles are entering the area in detected formation. The detected convoy fulfills the criterias for the vehicle count and the arrival proximity being small." + plate.description
+                plate.description = f"[CONVOY] ALERT in {area_name}: A convoy of vehicles is entering the area. {convoy_item.license_plates} vehicles are entering the area in detected formation. The detected convoy fulfills the criterias for the vehicle count and the arrival proximity being small.\n" + plate.description
             if plate_text in self.circling_plates:
-                plate.description = f"ALERT in {area_name}: Vehicle {plate_text} is detected suspiciously entering/leaving the area at least {CIRCLING_THRESHOLD_NUMBER} times! The vehicle is suspected of circling the designated area. Further actions for vehicle containment and further investigation is strongly advised." + plate.description
+                plate.description = f"[RETURNING_VEHICLE] ALERT in {area_name}: Vehicle {plate_text} is detected suspiciously entering/leaving the area at least {CIRCLING_THRESHOLD_NUMBER} times! The vehicle is suspected of circling the designated area. Further actions for vehicle containment and further investigation is strongly advised.\n" + plate.description
             if self.stolen:
-                plate.description = f"ALERT in {area_name}: The system has the detected vehicle {plate_text} registered as stolen. Immidiate suspect vehicle containment is advised." + plate.description
+                plate.description = f"[STOLEN_CAR] ALERT in {area_name}: The system has the detected vehicle {plate_text} registered as stolen. Immidiate suspect vehicle containment is advised.\n" + plate.description
             if len(OD_CARS) > 0 and self.color not in OD_CARS:
-                plate.description = f"ALERT in {area_name}: There is a mismatch with the vehicle characteristics detected. The license plate must be fake. The system entry for the {self.color} vehicle {plate_text} does not mach the sensor detected characteristics." + plate.description
+                plate.description = f"[FAKE_PLATE] ALERT in {area_name}: There is a mismatch with the vehicle characteristics detected. The license plate must be fake. The system entry for the {self.color} vehicle {plate_text} does not mach the sensor detected characteristics.\n" + plate.description
             plate.vehicle["manufacturer"] = plate.description + plate.vehicle["manufacturer"]
             publish_to_kafka("TOP12_04_LPR_ALERT", lpr_msg.header.caseId, plate.to_dict())
 
