@@ -17,7 +17,7 @@ class TOP21_01_COMMAND_CENTER_MISSION(HandleKafkaTopic):
                 data_dict["body"]["mission"]["equipment"]["cameras"], many=True
         )
         [write_data_to_redis(camera.deviceId, camera.to_json()) 
-            for camera in cameras if camera.areaInOut]
+            for camera in cameras if (camera.areaInOut and camera.area)]
 
     def execute(self):
         super().execute()
