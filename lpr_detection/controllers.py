@@ -9,12 +9,12 @@ from services.kafka_services import publish_to_kafka
 from services.national_db_services import get_vehicle_attributes
 
 from command_mission.models import AreaEntity, CameraEntity
-from .models import LPRMessageEntity, LPR, ConvoyItem
+from .models import LPRMessageEntity, LPR, CameraConvoyItem, ConvoyItem
 
 
 class TOP22_11_LPR_DONE(HandleKafkaTopic):
     model = LPRMessageEntity
-    convoy_dict = defaultdict(ConvoyItem)
+    camera_convoy_dict = defaultdict(CameraConvoyItem)
     circling_plates = []
 
     def _update_areas_capacity(self, areas: List[AreaEntity], platesLPR: List[LPR]) -> List[AreaEntity]:
@@ -42,12 +42,16 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
     def execute(self):
         super().execute()
         lpr_msg = self.get_entities()
+        self.convoy_item = None
 
         self._calculate_vehicle_count(lpr_msg)
 
-        convoy_item = self.convoy_dict[lpr_msg.body.deviceId]
-        convoy_item.check_and_clear_licence_plates()
-        convoy_item.add_licence_plates(lpr_msg.plates_detected)
+        camera_convoy = self.camera_convoy_dict[lpr_msg.body.deviceId]
+        camera_convoy.check_and_clear_licence_plates()
+        camera_convoy.add_licence_plates(lpr_msg.plates_detected)
+        if len(camera_convoy.license_plates) >= CONVOY_THRESHOLD_NUMBER:
+            self.convoy_item = ConvoyItem(camera_convoy.license_plates.copy())
+            camera_convoy.convoy_items.add(self.convoy_item)
 
         OD_CARS = get_and_remove_list_from_redis("OD_CARS")
         
@@ -55,8 +59,9 @@ class TOP22_11_LPR_DONE(HandleKafkaTopic):
             plate_text = plate.detection.platesDetected.text
             self.color, self.stolen = get_vehicle_attributes(plate_text)
             area_name = plate.area if plate.area else "a non restricted area"
-            if len(convoy_item.license_plates) >= CONVOY_THRESHOLD_NUMBER:                
-                plate.description = f"[CONVOY] ALERT in {area_name}: A convoy of vehicles is entering the area. {convoy_item.license_plates} vehicles are entering the area in detected formation. The detected convoy fulfills the criterias for the vehicle count and the arrival proximity being small.\n" + plate.description
+            cameras = [key for key, value in self.camera_convoy_dict.items() if self.convoy_item in value.convoy_items]
+            if len(cameras) > 1:
+                plate.description = f"[CONVOY] ALERT in {area_name}: A convoy of vehicles is entering the area. {*self.convoy_item.license_plates,} vehicles are entering the area in detected formation. The convoy was detected from {cameras} cameras. The detected convoy fulfills the criterias for the vehicle count and the arrival proximity being small.\n" + plate.description
             if plate_text in self.circling_plates:
                 plate.description = f"[RETURNING_VEHICLE] ALERT in {area_name}: Vehicle {plate_text} is detected suspiciously entering/leaving the area at least {CIRCLING_THRESHOLD_NUMBER} times! The vehicle is suspected of circling the designated area. Further actions for vehicle containment and further investigation is strongly advised.\n" + plate.description
             if self.stolen:

@@ -2,6 +2,7 @@ import requests
 from time import time
 
 from datetime import datetime
+from ordered_set import OrderedSet
 
 from settings import NATIONAL_DB_URL, SUSPECT_ATTRS_SET, VEHICLE_ATTRS_SET, CONVOY_THRESHOLD_TIME
 from dataclasses import dataclass, field
@@ -40,14 +41,22 @@ DEFAULT_VEHICLE = {
 
 @dataclass
 class ConvoyItem:
-    license_plates: Optional[Set[str]] = field(default_factory=set)
+    license_plates: Optional[OrderedSet[str]] = field(default_factory=OrderedSet)
+
+    def __hash__(self):
+        return hash(repr(self))
+
+
+@dataclass
+class CameraConvoyItem:
+    convoy_items: Optional[Set[ConvoyItem]] = field(default_factory=set)
+    license_plates: Optional[OrderedSet[str]] = field(default_factory=OrderedSet)
     timestamp_in_min: Optional[int] = 0
 
     def add_licence_plates(self, plates_detected):
-        {
+        for plate in plates_detected:
             self.license_plates.add(plate.detection.platesDetected.text)
-            for plate in plates_detected
-        }
+
     
     def check_and_clear_licence_plates(self):
         current_timestamp = int(time()) // 60

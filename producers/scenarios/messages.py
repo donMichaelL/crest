@@ -85,6 +85,51 @@ CONVOY_CAR =  {
     },
 }
 
+CONVOY_CAR_EXIT =  {
+    "header": {
+        "topicName": "TOP22_11_LPR_DONE",
+        "topicVer1": 1,
+        "topicVer2": 2,
+        "msgId": "Message Id",
+        "sender": "CERTH",
+        "sentUtc": "2022-04-13T06:45:23.007783Z",
+        "status": "System",
+        "msgType": "Data",
+        "source": "CERTH LPR module",
+        "scope": "Private",
+        "caseId": "637e27e8e1dabe00010eea96",
+    },
+    "body": {
+        "deviceId": "cam-2",
+        "platesDetected": {
+            "text": [
+                "CUSTOM",
+            ],
+            "boxes": [[300, 724, 168, 28]],
+            "scores": [
+                0.741867661476135,
+            ],
+            "url": [
+                "/projects/6204e17818279f000142419d/artefacts/62567181629b4b0e45fbfb23/media/115",
+                "/projects/6204e17818279f000142419d/artefacts/62567181629b4b0e45fbfb23/media/115"
+
+            ],
+            "car_id": [
+                10915
+            ],
+            "timestamp": [
+                "2022-04-03T09:19:56Z", "2022-04-03T09:19:56Z"
+            ],
+            "country": [
+                "XX", "YY"
+            ],
+        },
+        "lastDetection": "2022-04-13T06:51:37Z",
+        "lastAccessAPI": "2022-04-13T06:51:37Z",
+        "timestampProcessing": "2022-04-13T06:45:23.007863Z",
+    },
+}
+
 SUSPECT_EXIT =  {
     "header": {
         "topicName": "TOP22_11_LPR_DONE",
@@ -192,6 +237,51 @@ STOLEN_CAR = {
     },
     "body": {
         "deviceId": "cam-1",
+        "platesDetected": {
+            "text": [
+                "E65A851",
+            ],
+            "boxes": [[300, 724, 168, 28]],
+            "scores": [
+                0.741867661476135,
+            ],
+            "url": [
+                "/projects/6204e17818279f000142419d/artefacts/62567181629b4b0e45fbfb23/media/115",
+                "/projects/6204e17818279f000142419d/artefacts/62567181629b4b0e45fbfb23/media/115"
+
+            ],
+            "car_id": [
+                10915
+            ],
+            "timestamp": [
+                "2022-04-03T09:19:56Z", "2022-04-03T09:19:56Z"
+            ],
+            "country": [
+                "XX", "YY"
+            ],
+        },
+        "lastDetection": "2022-04-13T06:51:37Z",
+        "lastAccessAPI": "2022-04-13T06:51:37Z",
+        "timestampProcessing": "2022-04-13T06:45:23.007863Z",
+    },
+}
+
+STOLEN_CAR_EXIT = {
+    "header": {
+        "topicName": "TOP22_11_LPR_DONE",
+        "topicVer1": 1,
+        "topicVer2": 2,
+        "msgId": "Message Id",
+        "sender": "CERTH",
+        "sentUtc": "2022-04-13T06:45:23.007783Z",
+        "status": "System",
+        "msgType": "Data",
+        "source": "CERTH LPR module",
+        "scope": "Private",
+        "caseId": "637e27e8e1dabe00010eea96",
+    },
+    "body": {
+        "deviceId": "cam-2",
         "platesDetected": {
             "text": [
                 "E65A851",

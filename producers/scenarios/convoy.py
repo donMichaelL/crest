@@ -1,7 +1,7 @@
 import json
 from kafka import KafkaProducer
 
-from messages import COMMAND_MISSION, SUSPECT_PLATE, STOLEN_CAR, CONVOY_CAR
+from messages import COMMAND_MISSION, SUSPECT_PLATE, STOLEN_CAR, CONVOY_CAR, SUSPECT_EXIT, STOLEN_CAR_EXIT, CONVOY_CAR_EXIT
 
 import time
 
@@ -32,8 +32,20 @@ send_to_kafka("TOP22_11_LPR_DONE", SUSPECT_PLATE)
 
 time.sleep(1)
 
-send_to_kafka("TOP22_11_LPR_DONE", STOLEN_CAR)
+send_to_kafka("TOP22_11_LPR_DONE", CONVOY_CAR)
 
 time.sleep(1)
 
-send_to_kafka("TOP22_11_LPR_DONE", CONVOY_CAR)
+send_to_kafka("TOP22_11_LPR_DONE", STOLEN_CAR)
+
+time.sleep(2)
+
+send_to_kafka("TOP22_11_LPR_DONE", SUSPECT_EXIT)
+
+time.sleep(1)
+
+send_to_kafka("TOP22_11_LPR_DONE", CONVOY_CAR_EXIT)
+
+time.sleep(1)
+
+send_to_kafka("TOP22_11_LPR_DONE", STOLEN_CAR_EXIT)
